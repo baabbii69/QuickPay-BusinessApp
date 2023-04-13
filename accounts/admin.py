@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import *
 
-# Register your models here.
+
+admin.site.register((Industry, Incorporation, States, BusnessAdress, IdDocument, PesonalAdderss, DedicatedPerson, VerifyBusiness))
