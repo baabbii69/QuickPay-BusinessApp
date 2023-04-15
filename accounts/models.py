@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.conf import settings
+from django.contrib.auth import get_user_model
 
 
 
@@ -67,6 +69,18 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
 		return self.email
 
 
+class Balance(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='balances'
+    )
+    balance = models.DecimalField(max_digits=12, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.user}'s balance: {self.balance}"
+
+
 class Industry(models.Model):
 	industry_name = models.CharField(max_length=255)
 
@@ -85,42 +99,18 @@ class States(models.Model):
 	def __str__(self):
 		return self.state_name
 
-class BusnessAdress(models.Model):
-	states = models.ForeignKey(States, on_delete=models.PROTECT, related_name="states")
-	kifle_ketema = models.CharField(max_length=25)
-	woreda = models.CharField(max_length=20)
-	kebele = models.CharField(max_length=5)
-	house_number = models.CharField(max_length=20)
-	frendly_BN = models.CharField(max_length=50)
-	business_phone = models.CharField(max_length=12)
-	business_email = models.EmailField(max_length=255, unique=True)
-
-
-	def __str__(self):
-		return self.states
-
-class IdDocument(models.Model):
-	ids = models.CharField(max_length=20, choices=id_type)
-	id_upload = models.ImageField(upload_to='ids/')
-
-
-class PesonalAdderss(models.Model):
-	full_address = models.CharField(max_length=100)
-	state = models.ForeignKey(States, on_delete=models.PROTECT, related_name="state")
-
-
-	def __str__(self):
-		return self.full_address
 
 class DedicatedPerson(models.Model):
 	gender = models.CharField(max_length=15, choices=genders)
 	date_of_birth = models.DateField()
-	address = models.ForeignKey(PesonalAdderss, on_delete=models.PROTECT, related_name="personal_adress")
-	id_docouments = models.ForeignKey(IdDocument, on_delete=models.PROTECT, related_name="id_docouments")
+	full_address = models.CharField(max_length=100, null=True)
+	state = models.ForeignKey(States, on_delete=models.PROTECT, related_name="state", null=False)
+	ids = models.CharField(max_length=20, choices=id_type, null=False)
+	id_upload = models.ImageField(upload_to='data/ids/', null=False)
 
 
 
-class VerifyBusiness(models.Model):
+class VerifyDocument(models.Model):
 	business_type = models.BooleanField(default=True)
 	industrys = models.ForeignKey(Industry, on_delete=models.PROTECT, related_name="industrys")
 	category = models.CharField(max_length=30)
@@ -131,13 +121,19 @@ class VerifyBusiness(models.Model):
 	vat_check = models.BooleanField(default=False)
 	business_reg_num = models.CharField(max_length=30)
 	incorp_type = models.ForeignKey(Incorporation, on_delete=models.PROTECT, related_name="incorporation_name")
-	trade_license = models.FileField(upload_to='trade_license/')
-	tin_certificate = models.FileField(upload_to='tin_certificate/')
-	memorandum = models.FileField(upload_to='memorandum/')
-	business_address = models.ForeignKey(BusnessAdress, on_delete=models.PROTECT)
+	trade_license = models.FileField(upload_to='data/trade_license/')
+	tin_certificate = models.FileField(upload_to='data/tin_certificate/')
+	memorandum = models.FileField(upload_to='data/memorandum/')
 	business_contact = models.CharField(max_length=30)
-	proof_address = models.FileField(upload_to='address_proof/')
-
+	proof_address = models.FileField(upload_to='data/address_proof/')
+	states = models.ForeignKey(States, on_delete=models.PROTECT, related_name="states")
+	kifle_ketema = models.CharField(max_length=25)
+	woreda = models.CharField(max_length=20)
+	kebele = models.CharField(max_length=5)
+	house_number = models.CharField(max_length=20)
+	frendly_BN = models.CharField(max_length=50)
+	business_phone = models.CharField(max_length=12)
+	business_email = models.EmailField(max_length=255, unique=True)
 
 	def __str__(self):
 		return self.legal_BN

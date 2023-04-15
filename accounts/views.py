@@ -2,9 +2,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from .serializers import VerifyBusinessSerializer
+from .serializers import *
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
+from .models import *
 
 class VerifyBusinessView(APIView):
 	authentication_classes = [JWTAuthentication]
@@ -19,3 +20,12 @@ class VerifyBusinessView(APIView):
 			else:
 				return Response({'error': 'Business must be verified'}, status=status.HTTP_400_BAD_REQUEST)
 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CheckBalanceView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        user_balance = Balance.objects.get(user=request.user)
+        serializer = BalanceSerializer(user_balance)
+        return Response(serializer.data)
