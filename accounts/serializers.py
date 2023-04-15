@@ -14,6 +14,39 @@ class BalanceSerializer(serializers.ModelSerializer):
         model = Balance
         fields = ('balance',)
 
+
+class BankDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankDetail
+        fields = ['id', 'account_name', 'account_number', 'bank_name']
+
+class TransactionSerializer(serializers.Serializer):
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    bank_id = serializers.IntegerField()
+    bank = BankDetailSerializer(read_only=True)
+
+    class Meta:
+        model = Transaction
+        fields = ['id', 'user', 'amount', 'bank', 'timestamp']
+
+    # def create(self, validated_data):
+    #     user = self.context['request'].user
+    #     bank = BankDetail.objects.get(id=validated_data['bank_id'])
+    #     transaction = Transaction.objects.create(
+    #         user=user,
+    #         bank=bank,
+    #         amount=validated_data['amount']
+    #     )
+    #     return {
+    #         'transaction_id': transaction.id,
+    #         'user': user.username,
+    #         'amount': validated_data['amount'],
+    #         'bank': BankDetailSerializer(bank).data,
+    #         'timestamp': transaction.timestamp
+    #     }
+
+
+
 class StatesSerializer(serializers.ModelSerializer):
     class Meta:
         model = States

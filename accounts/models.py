@@ -43,7 +43,16 @@ class UserAccountManager(BaseUserManager):
 		return user
 
 	
+class Balance(models.Model):
+	user = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.CASCADE,
+		related_name='balances'
+	)
+	balance = models.DecimalField(max_digits=12, decimal_places=2)
 
+	def __str__(self):
+		return f"{self.user}'s balance: {self.balance}"
 
 class UserAccount(AbstractBaseUser, PermissionsMixin):
 	email = models.EmailField(max_length=255, unique=True)
@@ -69,17 +78,32 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
 		return self.email
 
 
-class Balance(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='balances'
-    )
-    balance = models.DecimalField(max_digits=12, decimal_places=2)
+class BankDetail(models.Model):
+	user = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.CASCADE,
+		related_name='bank_detail'
+	)
+	account_name = models.CharField(max_length=255)
+	account_number = models.CharField(max_length=255)
+	bank_name = models.CharField(max_length=255)
 
-    def __str__(self):
-        return f"{self.user}'s balance: {self.balance}"
+	def __str__(self):
+		return f'{self.bank_name}'
 
+
+class Transaction(models.Model):
+	user = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.CASCADE,
+		related_name='sent_transactions'
+	)
+	bank = models.ForeignKey(BankDetail, on_delete=models.PROTECT, related_name='transactions')
+	amount = models.DecimalField(max_digits=10, decimal_places=2)
+	timestamp = models.DateTimeField(auto_now_add=True)
+
+	def __str__(self):
+		return f'Transaction #{self.pk}'
 
 class Industry(models.Model):
 	industry_name = models.CharField(max_length=255)
