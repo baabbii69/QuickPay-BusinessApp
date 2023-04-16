@@ -13,37 +13,37 @@ class BalanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Balance
         fields = ('balance',)
-
+class BankSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bank
+        fields = ['id', 'bank_name']
+        read_only_fields = ['id']
 
 class BankDetailSerializer(serializers.ModelSerializer):
+    bank_name = serializers.PrimaryKeyRelatedField(queryset=Bank.objects.all())
+
     class Meta:
         model = BankDetail
         fields = ['id', 'account_name', 'account_number', 'bank_name']
 
-class TransactionSerializer(serializers.Serializer):
-    amount = serializers.DecimalField(max_digits=12, decimal_places=2)
-    bank_id = serializers.IntegerField()
-    bank = BankDetailSerializer(read_only=True)
+    def validate_bank_name(self, value):
+        user = self.context['request'].user
+        if BankDetail.objects.filter(user=user, bank_name=value).exists():
+            raise serializers.ValidationError('Bank detail with this bank name already exists.')
+        return value
+
+class TransactionSerializer(serializers.ModelSerializer):
+    bank_detail = BankDetailSerializer(read_only=True)
 
     class Meta:
         model = Transaction
-        fields = ['id', 'user', 'amount', 'bank', 'timestamp']
+        fields = ['id', 'amount', 'bank', 'timestamp', 'bank_detail']
 
-    # def create(self, validated_data):
-    #     user = self.context['request'].user
-    #     bank = BankDetail.objects.get(id=validated_data['bank_id'])
-    #     transaction = Transaction.objects.create(
-    #         user=user,
-    #         bank=bank,
-    #         amount=validated_data['amount']
-    #     )
-    #     return {
-    #         'transaction_id': transaction.id,
-    #         'user': user.username,
-    #         'amount': validated_data['amount'],
-    #         'bank': BankDetailSerializer(bank).data,
-    #         'timestamp': transaction.timestamp
-    #     }
+    def create(self, validated_data):
+        bank_detail = validated_data.pop('bank_detail')
+        transaction = Transaction.objects.create(bank_detail=bank_detail, **validated_data)
+        return transaction
+
 
 
 

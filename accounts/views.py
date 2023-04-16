@@ -34,44 +34,41 @@ class CheckBalanceView(APIView):
         return Response(serializer.data)
 
 
-
 class BankDetailView(APIView):
-	permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
-	def get(self, request, format=None):
-		bank_details = BankDetail.objects.filter(user=request.user)
-		serializer = BankDetailSerializer(bank_details, many=True)
-		return Response(serializer.data)
+    def get(self, request, format=None):
+        bank_details = BankDetail.objects.filter(user=request.user)
+        serializer = BankDetailSerializer(bank_details, many=True)
+        return Response(serializer.data)
 
-	def post(self, request, format=None):
-		serializer = BankDetailSerializer(data=request.data)
-		if serializer.is_valid():
-			serializer.save(user=request.user)
-			return Response(serializer.data, status=status.HTTP_201_CREATED)
-		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, format=None):
+        serializer = BankDetailSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-	def put(self, request, pk, format=None):
+    # def put(self, request, pk, format=None):
+    #     try:
+    #         bank_detail = BankDetail.objects.get(pk=pk, user=request.user)
+    #     except BankDetail.DoesNotExist:
+    #         return Response(status=status.HTTP_404_NOT_FOUND)
 
-		try:
-			bank_detail = BankDetail.objects.get(pk=pk, user=request.user)
-		except BankDetail.DoesNotExist:
-			return Response(status=status.HTTP_404_NOT_FOUND)
+    #     serializer = BankDetailSerializer(bank_detail, data=request.data, context={'request': request})
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-		serializer = BankDetailSerializer(bank_detail, data=request.data)
-		if serializer.is_valid():
-			serializer.save()
-			return Response(serializer.data)
-		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def delete(self, request, pk, format=None):
+        try:
+            bank_detail = BankDetail.objects.get(pk=pk, user=request.user)
+        except BankDetail.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
-	def delete(self, request, pk, format=None):
-
-		try:
-			bank_detail = BankDetail.objects.get(pk=pk, user=request.user)
-		except BankDetail.DoesNotExist:
-			return Response(status=status.HTTP_404_NOT_FOUND)
-
-		bank_detail.delete()
-		return Response(status=status.HTTP_204_NO_CONTENT)
+        bank_detail.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TransferView(APIView):
@@ -81,13 +78,12 @@ class TransferView(APIView):
         serializer = TransactionSerializer(data=request.data)
         if serializer.is_valid():
             amount = serializer.validated_data.get('amount')
-            bank_id = serializer.validated_data.get('bank_id')
-            print('bank_id:', bank_id)
+            bank_detail_id = serializer.validated_data.get('bank_detail_id')
             bank = None
             try:
-                bank = BankDetail.objects.get(id=bank_id)
+                bank = BankDetail.objects.get(id=bank_detail_id)
             except BankDetail.DoesNotExist:
-                return Response({'error': 'Invalid bank_id'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Invalid bank_detail_id'}, status=status.HTTP_400_BAD_REQUEST)
             user = request.user
 
             balance = None
@@ -117,13 +113,11 @@ class TransactionList(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk=None, format=None):
-        user = request.user
-        
-        if id is not None:
-            transaction = get_object_or_404(Transaction.objects.filter(user=user), pk=pk)
-            serializer = TransactionSerializer(transaction)
-            return Response(serializer.data)
-        
-        transactions = Transaction.objects.filter(user=user)
+        if pk:
+            transactions = Transaction.objects.filter(pk=pk, user=request.user)
+            if not transactions:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            transactions = Transaction.objects.filter(user=request.user)
         serializer = TransactionSerializer(transactions, many=True)
         return Response(serializer.data)

@@ -77,6 +77,11 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
 	def __str__(self):
 		return self.email
 
+class Bank(models.Model):
+	bank_name = models.CharField(max_length=255)
+
+	def __str__(self):
+		return self.bank_name
 
 class BankDetail(models.Model):
 	user = models.ForeignKey(
@@ -86,7 +91,7 @@ class BankDetail(models.Model):
 	)
 	account_name = models.CharField(max_length=255)
 	account_number = models.CharField(max_length=255)
-	bank_name = models.CharField(max_length=255)
+	bank_name = models.ForeignKey(Bank, on_delete=models.CASCADE, related_name='banks')
 
 	def __str__(self):
 		return f'{self.bank_name}'
