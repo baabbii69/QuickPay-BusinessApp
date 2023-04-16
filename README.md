@@ -3,7 +3,6 @@
 
 This is a Backend side of a Business  application that allows businesses to manage their transactions and payments.
 
- This project is built with Django DRF, Djoser, and Postgres DB.
 
 
 # Built With
