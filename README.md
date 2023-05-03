@@ -3,7 +3,6 @@
 
 This is a Backend side of a Business  application that allows businesses to manage their transactions and payments.
 
- This project is built with Django DRF, Djoser, and Postgres DB.
 
 
 # Built With
@@ -55,6 +54,8 @@ Start the development server:
 Business App provides the following API endpoints:
 
 > `/auth/users/` (POST):  creates  a new user by inserting a json file like below.
+
+
     {
         "email": "example@gmail.com",
         "first_name": "Joe",
@@ -72,12 +73,16 @@ Business App provides the following API endpoints:
 
 
 > `auth/users/activation/` (POST): To Activate Your Account.
+
+
     {
 	    "uid": "Mg",
 	    "token": "bmlxqo-47e3945cc65b9ba26d8c26e32390aec1"
     }
 
 > `/auth/jwt/create/` (POST): To Login and receive access and refresh token
+
+
     {
         "email": "example@gmail.com",
         "password": "12345678"
@@ -86,11 +91,15 @@ Business App provides the following API endpoints:
     After You Login You will receive access and refresh token
 
 > `/auth/jwt/refresh/` (POST): To get a new access when it expires by inputing the refresh token you got from Loging in
+
+
     {
        "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTY4MTY1OTYxNiwianRpIjoiMGE1NWQ3NjY3NTQ5NDE2N2IxYjQ4YWExMmQ3MDYxZDUiLCJ1c2VyX2lkIjoyfQ.PLFx-W_Z0vycWtoqlZd1KaF7vs5qCW1qkdgat92s07Q"
     }
 
 > `/auth/users/reset_password/` (POST):  request password reset.
+
+
     {
         "email": "example@gmail.com"
     }
@@ -102,6 +111,8 @@ Business App provides the following API endpoints:
     bmecjm-836936a57f2b488b0b5848ef9ab01748:  is your token
 
 > `/auth/users/reset_password_confirm/` (POST): To confirm password reset.
+
+
     {
 	    "uid": "Mg",
 	    "token": "bmecjm-836936a57f2b488b0b5848ef9ab01748"
@@ -134,6 +145,7 @@ You Need this to access the following endpoints.
 
 > `/api/bank-detail/` (POST): To create new bank detail.
 
+
     {
 		"account_name": "baabbii alex",
 		"account_number": "700306178327",
@@ -146,6 +158,7 @@ You Need this to access the following endpoints.
 > `/api/bank-detail/3/` (DELETE): To Delete selected  bank details with their ids.
 
 > `/api/transfer/` (POST): To transfer money to bank detail.
+
 
     {
 	"amount": "20.00",
