@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'accounts',
     'rest_framework',
     'djoser',
+    'rest_framework_swagger',
 ]
 
 MIDDLEWARE = [
