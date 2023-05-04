@@ -9,5 +9,6 @@ urlpatterns = [
     path('bank-detail/<int:pk>/', ListBankConnectView.as_view(), name='bank_detail-1'),
     path('withdraw/', WithdrawToBankView.as_view(), name='withdraw-to-bank'),
     path('transactions/', TransactionList.as_view(), name='transaction_list'),
+    path('banks/', GetBankListView.as_view(), name='banks'),
     path('transactions/<int:pk>/', TransactionList.as_view(), name='transaction_list'),
 ]

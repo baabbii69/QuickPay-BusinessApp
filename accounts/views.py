@@ -39,22 +39,44 @@ class CheckBalanceView(APIView):
         return Response(serializer.data)
 
 
+class GetBankListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        response = requests.post(f"http://localhost:1200/banks/get-banks/")
+        bank_list = response.json()
+        return Response(bank_list)
+
+
 class BankConnectView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         bank_id = request.data.get('bank_id')
         account_number = request.data.get('account_number')
+        user_id = request.user.id
 
-        response = requests.get(f"http://localhost:1300/banks/{bank_id}/")
+        if ConnectedBankss.objects.filter(user_id=user_id, bank_id=bank_id, account_number=account_number).exists():
+            return Response({'error': 'Bank account already connected'}, status=status.HTTP_400_BAD_REQUEST)
+
+        response = requests.post(f"http://localhost:1200/banks/get-banks/")
+        bank_list = response.json()
+        print(bank_list)
+
+        selected_bank = None
+        for cs in bank_list:
+            if cs['id'] == bank_id:
+                selected_bank = cs
+                break
+
+        print(selected_bank)
+
         if response.status_code != 200:
             return Response({'error': 'Invalid bank ID'}, status=status.HTTP_400_BAD_REQUEST)
 
-        bank_data = response.json()
-
         bank = ConnectedBankss(
-            bank_id=bank_data['id'],
-            name=bank_data['name'],
+            bank_id=selected_bank['id'],
+            name=selected_bank['name'],
         )
 
         response = requests.post(f"http://127.0.0.1:1200/banks/get-account",

@@ -59,7 +59,7 @@ class ConnectedBankss(models.Model):
     is_verified = models.BooleanField(default=False)
     bank_id = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
-    account_number= models.CharField(max_length=255)
+    account_number = models.CharField(max_length=255)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
