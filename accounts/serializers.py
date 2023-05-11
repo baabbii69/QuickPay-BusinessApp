@@ -12,6 +12,12 @@ class UserCreateSerializer(UserCreateSerializer):
         fields = ('id', 'email', 'first_name', 'last_name', 'password', 'business_name')
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'email')
+
+
 class BalanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wallet
@@ -25,12 +31,20 @@ class BanksConnectedSerializer(serializers.ModelSerializer):
 
 
 class TransactionSerializer(serializers.ModelSerializer):
-    bank = serializers.CharField(source='bank.name')
+    bank = serializers.CharField(source='bank.name', allow_null=True)
     timestamp = serializers.DateTimeField(format='%Y-%m-%dT%H:%M:%SZ')
 
     class Meta:
         model = Transaction
         fields = ['id', 'amount', 'bank', 'description', 'timestamp']
+
+
+class TransactionnSerializer(serializers.ModelSerializer):
+    timestamp = serializers.DateTimeField(format='%Y-%m-%dT%H:%M:%SZ')
+
+    class Meta:
+        model = Transaction
+        fields = ['id', 'amount', 'description', 'timestamp']
 
 
 class StatesSerializer(serializers.ModelSerializer):

@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-d91*53@gb8q4^y-v5tp-ap0b7*hqp$1rx@$0kzhcgc6403q46y
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -79,14 +79,21 @@ WSGI_APPLICATION = 'BusinessApp.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'Business',
+#         'USER': 'postgres',
+#         'PASSWORD': 'iloveu3k',
+#         'HOST': 'localhost',
+#
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'BusinessApp',
-        'USER': 'postgres',
-        'PASSWORD': 'iloveu3k',
-        'HOST': 'localhost',
-
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -146,9 +153,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-        ],
+    # 'DEFAULT_PERMISSION_CLASSES': [
+    #     'rest_framework.permissions.IsAuthenticated',
+    #     ],
 }
 
 SIMPLE_JWT = {

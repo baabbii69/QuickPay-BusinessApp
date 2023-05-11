@@ -1,18 +1,19 @@
-import requests
-from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView
-from rest_framework.response import Response
-from rest_framework import status
+import decimal
+import os
 
-from .serializers import *
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.permissions import IsAuthenticated
+import requests
 from django.shortcuts import get_object_or_404
-import httpx
-from asgiref.sync import sync_to_async
-from django.http import JsonResponse
+from dotenv import load_dotenv
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import *
+from .serializers import *
+
+load_dotenv()
 
 
 class VerifyBusinessView(APIView):
@@ -43,7 +44,7 @@ class GetBankListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        response = requests.post(f"http://localhost:1200/banks/get-banks/")
+        response = requests.post(f"{os.getenv('SC_BASE_URL')}/banks/get-banks/")
         bank_list = response.json()
         return Response(bank_list)
 
@@ -58,8 +59,10 @@ class BankConnectView(APIView):
 
         if ConnectedBankss.objects.filter(user_id=user_id, bank_id=bank_id, account_number=account_number).exists():
             return Response({'error': 'Bank account already connected'}, status=status.HTTP_400_BAD_REQUEST)
+        if ConnectedBankss.objects.filter(user_id=user_id, bank_id=bank_id).exists():
+            return Response({'error': 'Bank account already connected'}, status=status.HTTP_400_BAD_REQUEST)
 
-        response = requests.post(f"http://localhost:1200/banks/get-banks/")
+        response = requests.post(f"{os.getenv('SC_BASE_URL')}/banks/get-banks/")
         bank_list = response.json()
         print(bank_list)
 
@@ -79,7 +82,7 @@ class BankConnectView(APIView):
             name=selected_bank['name'],
         )
 
-        response = requests.post(f"http://127.0.0.1:1200/banks/get-account",
+        response = requests.post(f"{os.getenv('SC_BASE_URL')}/banks/get-account",
                                  json={'account_number': account_number, 'bank_id': bank_id})
 
         if response.status_code == 200:
@@ -129,7 +132,7 @@ class WithdrawToBankView(APIView):
         account_number = bank.account_number
 
         response = requests.post(
-            f"http://localhost:1200/businesses/withdraw",
+            f"{os.getenv('SC_BASE_URL')}/businesses/withdraw",
             json={"amount": amount, 'bank_id': bank_id, "account_number": account_number}
         )
 
@@ -145,41 +148,44 @@ class WithdrawToBankView(APIView):
                 )
                 transaction_serializer = TransactionSerializer(transaction)
 
-                return Response({'success': 'Withdrawal successful', 'transaction': transaction_serializer.data}, status=status.HTTP_201_CREATED)
+                return Response({'success': 'Withdrawal successful', 'transaction': transaction_serializer.data},
+                                status=status.HTTP_201_CREATED)
             else:
                 return Response({'error': 'Insufficient funds'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({'error': 'Withdrawal Fail'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# class DepositToWalletView(APIView):
-#     permission_classes = [IsAuthenticated]
-#
-#     def post(self, request):
-#         amount = request.data.get('amount')
-#         user_id = request.user.id
-#         description = request.data.get('description')
-#
-#         response = requests.post(
-#             f"http://localhost:1200/businesses/deposit",
-#             json={"amount": amount, 'user_id': user_id}
-#         )
-#
-#         if response.status_code == 200:
-#             balance = Wallet.objects.get(user=request.user)
-#             balance.balance += amount
-#             balance.save()
-#             transaction = Transaction.objects.create(
-#                 user=request.user,
-#                 amount=amount,
-#                 description=description,
-#             )
-#             transaction_serializer = TransactionSerializer(transaction)
-#
-#             return Response({'success': 'Deposit successful', 'transaction': transaction_serializer.data}, status=status.HTTP_201_CREATED)
-#         else:
-#             return Response({'error': 'Deposit Fail'}, status=status.HTTP_400_BAD_REQUEST)
-#
+class UserListView(APIView):
+
+    def get(self, request):
+        users = get_user_model().objects.all()
+        print(users)
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+
+class DepositToWalletView(APIView):
+
+    def post(self, request):
+        amount = request.data.get('amount')
+        user_id = request.data.get('business_id')
+        description = request.data.get('description')
+
+        balance = Wallet.objects.get(user=user_id)
+        user = get_user_model().objects.get(id=user_id)
+        balance.balance += decimal.Decimal(amount)
+        balance.save()
+        transaction = Transaction.objects.create(
+            user=user,
+            amount=amount,
+            description=description,
+        )
+        transaction_serializer = TransactionSerializer(transaction)
+
+        return Response({'success': 'Deposit successful', 'transaction': transaction_serializer.data},
+                        status=status.HTTP_201_CREATED)
+
 
 class TransactionList(APIView):
     permission_classes = [IsAuthenticated]

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.conf import settings
+import uuid
 from django.contrib.auth import get_user_model
 
 
@@ -56,6 +57,12 @@ class Wallet(models.Model):
 
 
 class ConnectedBankss(models.Model):
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True
+    )
     is_verified = models.BooleanField(default=False)
     bank_id = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
@@ -71,6 +78,12 @@ class ConnectedBankss(models.Model):
 
 
 class UserAccount(AbstractBaseUser, PermissionsMixin):
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True
+        )
     email = models.EmailField(max_length=255, unique=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
@@ -108,6 +121,12 @@ class BankDetail(models.Model):
 
 
 class Transaction(models.Model):
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True
+    )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
