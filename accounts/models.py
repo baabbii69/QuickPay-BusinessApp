@@ -4,11 +4,13 @@ from django.conf import settings
 import uuid
 from django.contrib.auth import get_user_model
 
-
-staff_sizes = (("1-5 People", "1-5 People"), ("5-10 People", "5-10 People"), ("More Than 10 People", "More Than 10 People"))
-Transaction_Volume = (("10,000 - 100,000", "10,000 - 100,000"), ("100,000 - 500,000", "100,000 - 500,000"), ("More Than 500,000", "More Than 500,000"))
+staff_sizes = (
+("1-5 People", "1-5 People"), ("5-10 People", "5-10 People"), ("More Than 10 People", "More Than 10 People"))
+Transaction_Volume = (("10,000 - 100,000", "10,000 - 100,000"), ("100,000 - 500,000", "100,000 - 500,000"),
+                      ("More Than 500,000", "More Than 500,000"))
 genders = (("Male", "Male"), ("Female", "Female"))
-id_type =(("Passport", "Passport"), ("Driver License", "Driver License"), ("kebele ID", "kebele ID"), ("National ID", "National ID"))
+id_type = (("Passport", "Passport"), ("Driver License", "Driver License"), ("kebele ID", "kebele ID"),
+           ("National ID", "National ID"))
 
 
 class UserAccountManager(BaseUserManager):
@@ -31,12 +33,12 @@ class UserAccountManager(BaseUserManager):
         user.save()
         return user
 
-    def create_user(self, email, password=None,  **extra_fields):
+    def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('Email Field is required to open an Account')
 
         email = self.normalize_email(email)
-        user = self.model(email=email,  **extra_fields)
+        user = self.model(email=email, **extra_fields)
 
         user.set_password(password)
         user.save()
@@ -83,11 +85,12 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
         default=uuid.uuid4,
         editable=False,
         unique=True
-        )
+    )
     email = models.EmailField(max_length=255, unique=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     business_name = models.CharField(max_length=255, unique=True)
+    business_type = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -105,6 +108,11 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class UserWithBusinessType(models.Model):
+    user = models.OneToOneField(UserAccount, on_delete=models.CASCADE, related_name='user_with_business_type')
+    business_type = models.CharField(max_length=255, null=True)
 
 
 class BankDetail(models.Model):
@@ -134,7 +142,7 @@ class Transaction(models.Model):
     )
     bank = models.ForeignKey(ConnectedBankss, on_delete=models.CASCADE, related_name='transactions', null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    description= models.CharField(max_length=255, null=True)
+    description = models.CharField(max_length=255, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -176,6 +184,7 @@ class DedicatedPerson(models.Model):
 
 class VerifyDocument(models.Model):
     business_type = models.BooleanField(default=True)
+    is_utility = models.BooleanField(default=False)
     industrys = models.ForeignKey(Industry, on_delete=models.PROTECT, related_name="industrys")
     category = models.CharField(max_length=30)
     staff_size = models.CharField(max_length=30, choices=staff_sizes)
@@ -198,8 +207,52 @@ class VerifyDocument(models.Model):
     frendly_BN = models.CharField(max_length=50)
     business_phone = models.CharField(max_length=12)
     business_email = models.EmailField(max_length=255, unique=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True,
+                                related_name='verify_document')
 
     def __str__(self):
         return self.legal_BN
 
 
+# class BillType(models.Model):
+#     name = models.CharField(max_length=100)
+#     amount = models.DecimalField(max_digits=12, decimal_places=2)
+#
+#     def __str__(self):
+#         return f'{self.name} - {self.amount}'
+#
+#
+# class Customer(models.Model):
+#     id = models.UUIDField(
+#         primary_key=True,
+#         default=uuid.uuid4,
+#         editable=False,
+#         unique=True
+#     )
+#     fname = models.CharField(max_length=255)
+#     lname = models.CharField(max_length=255)
+#
+#     def __str__(self):
+#         return f'{self.fname} - {self.lname}'
+#
+#
+# class Utility(models.Model):
+#     user = models.CharField(max_length=255)
+#     name = models.CharField(max_length=255)
+#
+#     def __str__(self):
+#         return f'{self.name} - {self.name}'
+#
+#
+# class UtilityNormal(models.Model):
+#     utility = models.ForeignKey(Utility, on_delete=models.CASCADE, related_name='utility', null=True)
+#     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='customer', null=True)
+#     bill_type = models.CharField(max_length=255, null=True)
+#     amount = models.DecimalField(max_digits=12, decimal_places=2)
+#     timestamp = models.DateTimeField(auto_now_add=True)
+#
+#     class Meta:
+#         ordering = ['-timestamp']
+#
+#     def __str__(self):
+#         return f'{self.utility.name} - {self.customer}'

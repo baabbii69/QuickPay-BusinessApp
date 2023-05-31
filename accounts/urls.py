@@ -12,5 +12,8 @@ urlpatterns = [
     path('banks/', GetBankListView.as_view(), name='banks'),
     path('transactions/<int:pk>/', TransactionList.as_view(), name='transaction_list'),
     path('deposit-to-wallet/', DepositToWalletView.as_view(), name='deposit_to_wallet'),
-    path('user/', UserListView.as_view(), name='users')
+    path('user/', UserListView.as_view(), name='users'),
+    path('u/', VerifyDocumentAPIView.as_view(), name='tests'),
+    # path('sent-to-user/', UtilityView.as_view(), name='utility_to_user'),
+    # path('utility-pay/', UtilityPayView.as_view(), name='utility_pay'),
 ]

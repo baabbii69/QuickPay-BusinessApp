@@ -39,6 +39,11 @@ class TransactionSerializer(serializers.ModelSerializer):
         fields = ['id', 'amount', 'bank', 'description', 'timestamp']
 
 
+class WithdrawSerializer(serializers.Serializer):
+    class Meta:
+        fields = ['amount', 'bank_id']
+
+
 class TransactionnSerializer(serializers.ModelSerializer):
     timestamp = serializers.DateTimeField(format='%Y-%m-%dT%H:%M:%SZ')
 
@@ -78,3 +83,62 @@ class VerifyBusinessSerializer(serializers.ModelSerializer):
                   'tin_certificate', 'memorandum', 'business_contact', 'proof_address', 'states',
                   'kifle_ketema', 'woreda', 'kebele', 'house_number', 'frendly_BN', 'business_phone', 'business_email']
         read_only_fields = ['id']
+
+
+# class UtilitySerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Utility
+#         fields = ['id', 'name', 'custemer', 'bill_amount', 'timestamp']
+#         read_only_fields = ['id']
+
+
+# class VerifyDocumentSerializer(serializers.ModelSerializer):
+#     user = serializers.CharField(source='id', allow_null=True)
+#
+#     class Meta:
+#         model = VerifyDocument
+#         fields = '__all__'
+
+
+class UsersAccountSerializer(serializers.ModelSerializer):
+    verify_document = VerifyBusinessSerializer()
+
+    class Meta:
+        model = UserAccount
+        fields = '__all__'
+
+
+class VerifyDocumentSerializer(serializers.Serializer):
+    user = serializers.UUIDField()
+
+    def to_representation(self, instance):
+        user_id = instance
+        try:
+            user = User.objects.get(id=user_id)
+            return {'user': user.id}
+        except User.DoesNotExist:
+            return {'user': None}
+
+# class CustomerSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Customer
+#         fields = '__all__'
+#
+#
+# class UtilitySerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Utility
+#         fields = '__all__'
+# class BillTypeSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = BillType
+#         fields = '__all__'
+#
+#     def create(self, validated_data):
+#         user_id = self.context['request'].user.id  # Assuming you have the current user in the request's context
+#         utility_instance = Utility.objects.get(user_id=user_id)
+#
+#         bill_type = BillType.objects.create(**validated_data)
+#         utility_instance.bill_types.add(bill_type)
+#
+#         return bill_type
