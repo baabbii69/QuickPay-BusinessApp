@@ -1,7 +1,11 @@
 import decimal
 import os
+from djoser.conf import settings
+from django.conf import settings
+
 
 import requests
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from dotenv import load_dotenv
 from rest_framework import status, generics
@@ -14,11 +18,60 @@ from rest_framework.schemas import SchemaGenerator
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
-
 from .models import *
 from .serializers import *
 
+from django.shortcuts import redirect
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_decode
+from django.views.decorators.csrf import csrf_exempt
+from django.core.mail import send_mail
+from django.contrib.sites.shortcuts import get_current_site
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.conf import settings
+
 load_dotenv()
+User = get_user_model()
+
+
+@csrf_exempt
+def account_activation(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+
+        # Send confirmation email
+        current_site = get_current_site(request)
+        mail_subject = 'Activate your account'
+        message = render_to_string('email/confirmation.html', {
+            'user': user,
+            'domain': current_site.domain,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': token,
+        })
+        send_mail(mail_subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
+
+        # Redirect to a success page or any other desired URL
+        return redirect('activation_success')
+    else:
+        # Redirect to an error page or any other desired URL
+        return redirect('activation_error')
+
+
+def activation_success(request):
+    return HttpResponse("Activation Successful!")
+
+
+def activation_error(request):
+    return HttpResponse("Activation Error!")
 
 
 class VerifyBusinessView(APIView):
@@ -27,10 +80,10 @@ class VerifyBusinessView(APIView):
 
     @swagger_auto_schema(
         request_body=VerifyBusinessSerializer,
-        responses={200: VerifyBusinessSerializer(many=True)},
+        responses={200:VerifyBusinessSerializer(many=True)},
         operation_description="Verify a business",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="JWT <token>",
-                                              type=openapi.TYPE_STRING, required=True)]
+                                             type=openapi.TYPE_STRING, required=True)]
     )
     def post(self, request, format=None):
         serializer = VerifyBusinessSerializer(data=request.data)
@@ -40,18 +93,39 @@ class VerifyBusinessView(APIView):
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
-                return Response({'error': 'Business must be verified'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error':'Business must be verified'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class IndustryView(APIView):
+    def get(self, request):
+        industries = Industry.objects.all()
+        serializer = IndustrySerializer(industries, many=True)
+        return Response(serializer.data)
+
+
+class StatesView(APIView):
+    def get(self, request):
+        states = States.objects.all()
+        serializer = StatesSerializer(states, many=True)
+        return Response(serializer.data)
+
+
+class IncorporationView(APIView):
+    def get(self, request):
+        incorporations = Incorporation.objects.all()
+        serializer = IncorporationSerializer(incorporations, many=True)
+        return Response(serializer.data)
 
 
 class CheckBalanceView(APIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
-        responses={200: BalanceSerializer(many=True)},
+        responses={200:BalanceSerializer(many=True)},
         operation_description="Check user balance",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="JWT <token>",
-                                                type=openapi.TYPE_STRING, required=True)]
+                                             type=openapi.TYPE_STRING, required=True)]
     )
     def get(self, request):
         user_balance = Wallet.objects.get(user=request.user)
@@ -73,10 +147,10 @@ class BankConnectView(APIView):
 
     @swagger_auto_schema(
         request_body=BanksConnectedSerializer,
-        responses={200: BanksConnectedSerializer(many=True)},
+        responses={200:BanksConnectedSerializer(many=True)},
         operation_description="Connect a bank account",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="JWT <token>",
-                                              type=openapi.TYPE_STRING, required=True)]
+                                             type=openapi.TYPE_STRING, required=True)]
     )
     def post(self, request):
         bank_id = request.data.get('bank_id')
@@ -84,9 +158,9 @@ class BankConnectView(APIView):
         user_id = request.user.id
 
         if ConnectedBankss.objects.filter(user_id=user_id, bank_id=bank_id, account_number=account_number).exists():
-            return Response({'error': 'Bank account already connected'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error':'Bank account already connected'}, status=status.HTTP_400_BAD_REQUEST)
         if ConnectedBankss.objects.filter(user_id=user_id, bank_id=bank_id).exists():
-            return Response({'error': 'Bank already connected'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error':'Bank already connected'}, status=status.HTTP_400_BAD_REQUEST)
 
         response = requests.post(f"{os.getenv('SC_BASE_URL')}/banks/get-banks/")
         bank_list = response.json()
@@ -101,7 +175,7 @@ class BankConnectView(APIView):
         print(selected_bank)
 
         if response.status_code != 200:
-            return Response({'error': 'Invalid bank ID'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error':'Invalid bank ID'}, status=status.HTTP_400_BAD_REQUEST)
 
         bank = ConnectedBankss(
             bank_id=selected_bank['id'],
@@ -109,7 +183,7 @@ class BankConnectView(APIView):
         )
 
         response = requests.post(f"{os.getenv('SC_BASE_URL')}/banks/get-account",
-                                 json={'account_number': account_number, 'bank_id': bank_id})
+                                 json={'account_number':account_number, 'bank_id':bank_id})
 
         if response.status_code == 200:
             bank.account_number = account_number
@@ -117,19 +191,19 @@ class BankConnectView(APIView):
             bank.save()
             serializer = BanksConnectedSerializer(bank)
 
-            return Response({'success': 'Bank account connected'}, status=status.HTTP_200_OK)
+            return Response({'success':'Bank account connected'}, status=status.HTTP_200_OK)
         else:
-            return Response({'error': 'Invalid account number'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error':'Invalid account number'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ListBankConnectView(APIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
-        responses={200: BanksConnectedSerializer(many=True)},
+        responses={200:BanksConnectedSerializer(many=True)},
         operation_description="List all connected bank accounts",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="JWT <token>",
-                                              type=openapi.TYPE_STRING, required=True)]
+                                             type=openapi.TYPE_STRING, required=True)]
     )
     def get(self, request, pk=None, format=None):
         user_id = request.user.id
@@ -148,9 +222,9 @@ class ListBankConnectView(APIView):
         try:
             bank = ConnectedBankss.objects.get(pk=pk, user_id=user_id)
             bank.delete()
-            return Response({'success': 'Bank account disconnected'}, status=status.HTTP_200_OK)
+            return Response({'success':'Bank account disconnected'}, status=status.HTTP_200_OK)
         except ConnectedBankss.DoesNotExist:
-            return Response({'error': 'Bank account not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error':'Bank account not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class WithdrawToBankView(APIView):
@@ -158,10 +232,10 @@ class WithdrawToBankView(APIView):
 
     @swagger_auto_schema(
         request_body=WithdrawSerializer,
-        responses={200: TransactionSerializer(many=True)},
+        responses={200:TransactionSerializer(many=True)},
         operation_description="Withdraw from wallet to bank account",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="JWT <token>",
-                                              type=openapi.TYPE_STRING, required=True)]
+                                             type=openapi.TYPE_STRING, required=True)]
     )
     def post(self, request):
         amount = request.data.get('amount')
@@ -172,9 +246,9 @@ class WithdrawToBankView(APIView):
 
         response = requests.post(
             f"{os.getenv('SC_BASE_URL')}/businesses/withdraw",
-            json={"amount": amount, 'bank_id': bank_id, "account_number": account_number}
+            json={"amount":amount, 'bank_id':bank_id, "account_number":account_number}
         )
-
+        print(response.json())
         if response.status_code == 200:
             if balance.balance >= amount:
                 balance.balance -= amount
@@ -187,12 +261,12 @@ class WithdrawToBankView(APIView):
                 )
                 transaction_serializer = TransactionSerializer(transaction)
 
-                return Response({'success': 'Withdrawal successful', 'transaction': transaction_serializer.data},
+                return Response({'success':'Withdrawal successful', 'transaction':transaction_serializer.data},
                                 status=status.HTTP_201_CREATED)
             else:
-                return Response({'error': 'Insufficient funds'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error':'Insufficient funds'}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': 'Withdrawal Fail'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error':'Withdrawal Fail'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserListView(APIView):
@@ -210,7 +284,7 @@ class DepositToWalletView(APIView):
         amount = request.data.get('amount')
         user_id = request.data.get('business_id')
         description = request.data.get('description')
-
+        print(request.data)
         balance = Wallet.objects.get(user=user_id)
         user = get_user_model().objects.get(id=user_id)
         balance.balance += decimal.Decimal(amount)
@@ -222,7 +296,7 @@ class DepositToWalletView(APIView):
         )
         transaction_serializer = TransactionSerializer(transaction)
 
-        return Response({'success': 'Deposit successful', 'transaction': transaction_serializer.data},
+        return Response({'success':'Deposit successful', 'transaction':transaction_serializer.data},
                         status=status.HTTP_201_CREATED)
 
 
@@ -230,10 +304,10 @@ class TransactionList(APIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
-        responses={200: TransactionSerializer(many=True)},
+        responses={200:TransactionSerializer(many=True)},
         operation_description="List all transactions",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="JWT <token>",
-                                              type=openapi.TYPE_STRING, required=True)]
+                                             type=openapi.TYPE_STRING, required=True)]
     )
     def get(self, request, pk=None, format=None):
         if pk:
@@ -259,7 +333,6 @@ class VerifyDocumentAPIView(APIView):
         queryset = VerifyDocument.objects.filter(business_type=True).values_list('user', flat=True)
         serializer = VerifyDocumentSerializer(queryset, many=True)
         return Response(serializer.data)
-
 
 # class CustomersAPIView(APIView):
 #     def get(self, request):

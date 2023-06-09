@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+# from djoser.urls import UserViewSetActivation
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
@@ -28,6 +29,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
+    path('auth/users/activation/', include('djoser.urls')),
     path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('', include([
         path('api/', include('accounts.urls')),

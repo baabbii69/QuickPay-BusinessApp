@@ -14,6 +14,13 @@ urlpatterns = [
     path('deposit-to-wallet/', DepositToWalletView.as_view(), name='deposit_to_wallet'),
     path('user/', UserListView.as_view(), name='users'),
     path('u/', VerifyDocumentAPIView.as_view(), name='tests'),
+    path('auth/users/activation/<str:uidb64>/<str:token>/', account_activation, name='useraccount-activation'),
+    path('activation/success/', activation_success, name='activation_success'),
+    path('activation/error/', activation_error, name='activation_error'),
+    path('industry/', IndustryView.as_view(), name='industry'),
+    path('state/', StatesView.as_view(), name='state'),
+    path('incorporation/', IncorporationView.as_view(), name='incorporation'),
+
     # path('sent-to-user/', UtilityView.as_view(), name='utility_to_user'),
     # path('utility-pay/', UtilityPayView.as_view(), name='utility_pay'),
 ]

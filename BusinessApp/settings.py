@@ -47,11 +47,13 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'djoser',
+    'corsheaders',
     # 'rest_framework_swagger',
     'drf_yasg',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -60,13 +62,16 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = ["http://192.168.8.109:5173"]
+CORS_ALLOW_HEADERS = ['*']
 
 ROOT_URLCONF = 'BusinessApp.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         # os.path.join(BASE_DIR, build)
         'APP_DIRS': True,
         'OPTIONS': {
@@ -167,10 +172,15 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-   'AUTH_HEADER_TYPES': ('JWT',),
+    'AUTH_HEADER_TYPES': ('JWT',),
+    'BLACKLIST_AFTER_ROTATION': False
 }
+#
+# PROTOCOL = 'localhost:8000'
+# DOMAIN = 'BusinessApp'
 
 DJOSER = {
+
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True,
     'USERNAME_CHANGED_EMAIL_CONFIRMATION': True,
@@ -179,13 +189,21 @@ DJOSER = {
     'SET_PASSWORD_RETYPE': True,
     'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
     'USERNAME_RESET_CONFIRM_URL': 'email/reset/confirm/{uid}/{token}',
-    'ACTIVATION_URL': 'activate/{uid}/{token}',
+    'EMAIL_CONFIRMATION_URL': 'email/confirm/{uid}/{token}',
+    'ACTIVATION_URL': '/activate/{uid}/{token}',
+    'ACTIVATION_EMAIL': 'email.CustomActivationEmail',
+    'CREATE_CONFIRMATION_EMAIL': 'email.CustomConfirmationEmail',
     'SEND_ACTIVATION_EMAIL': True,
     'SERIALIZERS': {
         'user_create': 'accounts.serializers.UserCreateSerializer',
         'user': 'accounts.serializers.UserCreateSerializer',
         'user_delete': 'djoser.serializers.UserDeleteSerializer',
-    }
+    },
+    'EMAIL': {
+        # 'activation': 'email.CustomActivationEmail',
+        'confirmation': 'accounts.views.CustomConfirmationEmail',
+    },
+
 }
 
 JET_THEMES = [

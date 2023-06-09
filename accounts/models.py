@@ -173,6 +173,20 @@ class States(models.Model):
         return self.state_name
 
 
+class StaffSize(models.Model):
+    staff_sizes = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.staff_sizes
+
+
+class TransVolume(models.Model):
+    trans_volume = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.trans_volume
+
+
 class DedicatedPerson(models.Model):
     gender = models.CharField(max_length=15, choices=genders)
     date_of_birth = models.DateField()
