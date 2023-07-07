@@ -3,7 +3,6 @@ import os
 from djoser.conf import settings
 from django.conf import settings
 
-
 import requests
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -80,7 +79,7 @@ class VerifyBusinessView(APIView):
 
     @swagger_auto_schema(
         request_body=VerifyBusinessSerializer,
-        responses={200:VerifyBusinessSerializer(many=True)},
+        responses={200: VerifyBusinessSerializer(many=True)},
         operation_description="Verify a business",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="JWT <token>",
                                              type=openapi.TYPE_STRING, required=True)]
@@ -93,7 +92,7 @@ class VerifyBusinessView(APIView):
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
-                return Response({'error':'Business must be verified'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Business must be verified'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -122,7 +121,7 @@ class CheckBalanceView(APIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
-        responses={200:BalanceSerializer(many=True)},
+        responses={200: BalanceSerializer(many=True)},
         operation_description="Check user balance",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="JWT <token>",
                                              type=openapi.TYPE_STRING, required=True)]
@@ -142,12 +141,21 @@ class GetBankListView(APIView):
         return Response(bank_list)
 
 
+# class GetAccountView(APIView):
+#     # permission_classes = [IsAuthenticated]
+#
+#     def get(self, request):
+#         response = requests.post(f"{os.getenv('SC_BASE_URL')}/banks/get-banks/")
+#         account_list = response.json()
+#         return Response(account_list)
+
+
 class BankConnectView(APIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         request_body=BanksConnectedSerializer,
-        responses={200:BanksConnectedSerializer(many=True)},
+        responses={200: BanksConnectedSerializer(many=True)},
         operation_description="Connect a bank account",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="JWT <token>",
                                              type=openapi.TYPE_STRING, required=True)]
@@ -158,9 +166,9 @@ class BankConnectView(APIView):
         user_id = request.user.id
 
         if ConnectedBankss.objects.filter(user_id=user_id, bank_id=bank_id, account_number=account_number).exists():
-            return Response({'error':'Bank account already connected'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Bank account already connected'}, status=status.HTTP_400_BAD_REQUEST)
         if ConnectedBankss.objects.filter(user_id=user_id, bank_id=bank_id).exists():
-            return Response({'error':'Bank already connected'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Bank already connected'}, status=status.HTTP_400_BAD_REQUEST)
 
         response = requests.post(f"{os.getenv('SC_BASE_URL')}/banks/get-banks/")
         bank_list = response.json()
@@ -175,7 +183,7 @@ class BankConnectView(APIView):
         print(selected_bank)
 
         if response.status_code != 200:
-            return Response({'error':'Invalid bank ID'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid bank ID'}, status=status.HTTP_400_BAD_REQUEST)
 
         bank = ConnectedBankss(
             bank_id=selected_bank['id'],
@@ -183,24 +191,24 @@ class BankConnectView(APIView):
         )
 
         response = requests.post(f"{os.getenv('SC_BASE_URL')}/banks/get-account",
-                                 json={'account_number':account_number, 'bank_id':bank_id})
-
+                                 json={'account_number': account_number, 'bank_id': bank_id})
+        print('++++++++++++++++++++++', account_number)
         if response.status_code == 200:
             bank.account_number = account_number
             bank.user = request.user
             bank.save()
             serializer = BanksConnectedSerializer(bank)
 
-            return Response({'success':'Bank account connected'}, status=status.HTTP_200_OK)
+            return Response({'success': 'Bank account connected'}, status=status.HTTP_200_OK)
         else:
-            return Response({'error':'Invalid account number'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid account number'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ListBankConnectView(APIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
-        responses={200:BanksConnectedSerializer(many=True)},
+        responses={200: BanksConnectedSerializer(many=True)},
         operation_description="List all connected bank accounts",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="JWT <token>",
                                              type=openapi.TYPE_STRING, required=True)]
@@ -209,6 +217,7 @@ class ListBankConnectView(APIView):
         user_id = request.user.id
         if pk:
             connected_banks = ConnectedBankss.objects.filter(pk=pk, user_id=user_id)
+
             if not connected_banks:
                 return Response(status=status.HTTP_404_NOT_FOUND)
         else:
@@ -222,9 +231,9 @@ class ListBankConnectView(APIView):
         try:
             bank = ConnectedBankss.objects.get(pk=pk, user_id=user_id)
             bank.delete()
-            return Response({'success':'Bank account disconnected'}, status=status.HTTP_200_OK)
+            return Response({'success': 'Bank account disconnecte d'}, status=status.HTTP_200_OK)
         except ConnectedBankss.DoesNotExist:
-            return Response({'error':'Bank account not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Bank account not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class WithdrawToBankView(APIView):
@@ -232,7 +241,7 @@ class WithdrawToBankView(APIView):
 
     @swagger_auto_schema(
         request_body=WithdrawSerializer,
-        responses={200:TransactionSerializer(many=True)},
+        responses={200: TransactionSerializer(many=True)},
         operation_description="Withdraw from wallet to bank account",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="JWT <token>",
                                              type=openapi.TYPE_STRING, required=True)]
@@ -244,29 +253,39 @@ class WithdrawToBankView(APIView):
         balance = Wallet.objects.get(user=request.user)
         account_number = bank.account_number
 
-        response = requests.post(
-            f"{os.getenv('SC_BASE_URL')}/businesses/withdraw",
-            json={"amount":amount, 'bank_id':bank_id, "account_number":account_number}
-        )
-        print(response.json())
-        if response.status_code == 200:
-            if balance.balance >= amount:
-                balance.balance -= amount
-                balance.save()
-                transaction = Transaction.objects.create(
-                    user=request.user,
-                    amount=amount,
-                    bank=bank,
-                    description=response.json()['description'],
-                )
-                transaction_serializer = TransactionSerializer(transaction)
+        if bank.is_verified:
+            response = requests.post(
+                f"{os.getenv('SC_BASE_URL')}/businesses/withdraw",
+                json={"amount": amount, 'bank_id': bank_id, "account_number": account_number}
+            )
+            print(response.json())
+            if response.status_code == 200:
+                if balance.balance >= amount:
+                    balance.balance -= amount
+                    balance.save()
+                    transaction = Transaction.objects.create(
+                        user=request.user,
+                        amount=amount,
+                        bank=bank,
+                        description=response.json()['description'],
+                    )
+                    transaction_serializer = TransactionSerializer(transaction)
 
-                return Response({'success':'Withdrawal successful', 'transaction':transaction_serializer.data},
-                                status=status.HTTP_201_CREATED)
+                    # Send confirmation email
+                    subject = 'Money Transfer Confirmation'
+                    message = f"Your withdrawal amount of {amount} birr has been successfully transferred to your {bank}  account."
+                    from_email = settings.EMAIL_HOST_USER
+                    to_email = [request.user.email]
+                    send_mail(subject, message, from_email, to_email, fail_silently=False)
+
+                    return Response({'success': 'Withdrawal successful', 'transaction': transaction_serializer.data},
+                                    status=status.HTTP_201_CREATED)
+                else:
+                    return Response({'error': 'Insufficient funds'}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response({'error':'Insufficient funds'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Withdrawal Fail'}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error':'Withdrawal Fail'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Bank account not verified'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserListView(APIView):
@@ -295,8 +314,14 @@ class DepositToWalletView(APIView):
             description=description,
         )
         transaction_serializer = TransactionSerializer(transaction)
+        # Send confirmation email
+        subject = 'Money Deposit Confirmation'
+        message = f"You have received  {amount} birr ."
+        from_email = settings.EMAIL_HOST_USER
+        to_email = [user.email]
+        send_mail(subject, message, from_email, to_email, fail_silently=False)
 
-        return Response({'success':'Deposit successful', 'transaction':transaction_serializer.data},
+        return Response({'success': 'Deposit successful', 'transaction': transaction_serializer.data},
                         status=status.HTTP_201_CREATED)
 
 
@@ -304,7 +329,7 @@ class TransactionList(APIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
-        responses={200:TransactionSerializer(many=True)},
+        responses={200: TransactionSerializer(many=True)},
         operation_description="List all transactions",
         manual_parameters=[openapi.Parameter('Authorization', openapi.IN_HEADER, description="JWT <token>",
                                              type=openapi.TYPE_STRING, required=True)]

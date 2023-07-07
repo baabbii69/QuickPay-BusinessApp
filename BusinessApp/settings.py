@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-
+from datetime import timedelta
 from pathlib import Path
 import os
 
@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-d91*53@gb8q4^y-v5tp-ap0b7*hqp$1rx@$0kzhcgc6403q46y
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*', 'vercel.app']
+ALLOWED_HOSTS = ['*', '743a-196-189-233-4.ngrok-free.app ']
 
 
 # Application definition
@@ -63,7 +63,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOWED_ORIGINS = ["http://192.168.8.109:5173"]
+CORS_ALLOWED_ORIGINS = ["http://192.168.8.109:5173", "http://localhost:5173", ]
 CORS_ALLOW_HEADERS = ['*']
 
 ROOT_URLCONF = 'BusinessApp.urls'
@@ -112,8 +112,8 @@ DATABASES = {
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'joemaammaa69420@gmail.com'
-EMAIL_HOST_PASSWORD = 'iqkwwwqhjzndfirw'
+EMAIL_HOST_USER = 'quickpayeth@gmail.com'
+EMAIL_HOST_PASSWORD = 'oqwembadvztgzjqe'
 EMAIL_USE_TLS = True
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -173,11 +173,10 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('JWT',),
-    'BLACKLIST_AFTER_ROTATION': False
+    'BLACKLIST_AFTER_ROTATION': False,
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=90),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
-#
-# PROTOCOL = 'localhost:8000'
-# DOMAIN = 'BusinessApp'
 
 DJOSER = {
 

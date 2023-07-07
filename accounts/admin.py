@@ -24,13 +24,13 @@ class WalletAdmin(admin.ModelAdmin):
 
 
 class VerifyDocumentAdmin(admin.ModelAdmin):
-    list_display = ('legal_BN', 'user')
+    list_display = ('legal_BN', 'user', 'id')
     list_filter = ('user', 'legal_BN')
 
 
 class ConnectedBankssAdmin(admin.ModelAdmin):
-    list_display = ('name', 'bank_id', 'account_number')
-    list_filter = ('name', 'account_number')
+    list_display = ('name', 'bank_id', 'account_number', 'is_verified')
+    list_filter = ('name', 'account_number', 'is_verified')
 
 
 admin.site.site_header = 'QuickPay Business Admin Panel'

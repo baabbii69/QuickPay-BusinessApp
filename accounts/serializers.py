@@ -45,7 +45,7 @@ class WithdrawSerializer(serializers.Serializer):
 
 
 class TransactionnSerializer(serializers.ModelSerializer):
-    timestamp = serializers.DateTimeField(format='%Y-%m-%dT%H:%M:%SZ')
+    timestamp = serializers.DateTimeField(format='%Y-%m-%d-%H:%M:%S')
 
     class Meta:
         model = Transaction
